@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cafetería Challenge ☕</title>
+
+  <!-- Librerías principales -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+
+  <!-- 🖐️ Compatibilidad con pantallas táctiles -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css">
+
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #ffebc6, #f5c36a);
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      background: #6b4226;
+      color: #fff;
+      padding: 20px;
+      margin: 0;
+      font-size: 32px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    #puntaje, #tiempo {
+      font-size: 20px;
+      margin: 10px;
+      font-weight: bold;
+      color: #4b2e05;
+    }
+
+    #game-container {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      padding: 20px;
+      flex-wrap: wrap;
+    }
+
+    #cocina, #pedidos-clientes {
+      width: 45%;
+      min-width: 300px;
+      min-height: 520px;
+      background: #fff7ee;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      border: 3px solid #8d6e63;
+      position: relative;
+    }
+
+    .ingrediente {
+      width: 80px;
+      height: 80px;
+      background: #fff;
+      border-radius: 50%;
+      margin: 10px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 30px;
+      cursor: grab;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      transition: transform 0.1s ease;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .ingrediente:hover {
+      transform: scale(1.1);
+    }
+
+    #taza-drop {
+      width: 150px;
+      height: 150px;
+      background: #fafafa;
+      border: 5px dashed #6b4226;
+      border-radius: 15px;
+      margin: 30px auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      color: #6b4226;
+    }
+
+    .pedido {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      padding: 10px;
+      margin: 10px auto;
+      width: 90%;
+      text-align: left;
+    }
+
+    #cliente-personaje {
+      font-size: 60px;
+      margin-bottom: 10px;
+      transition: transform 0.5s;
+    }
+
+    #mensaje {
+      font-weight: bold;
+      color: #00796b;
+      margin-top: 10px;
+      min-height: 20px;
+    }
+
+    button {
+      background: #6b4226;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #8b5a2b;
+    }
+
+    /* 📋 Cuadro de receta visible arriba */
+    #receta-actual {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: #fff8e1;
+      border: 2px solid #6b4226;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      text-align: left;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      width: 200px;
+    }
+
+    #receta-actual h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #6b4226;
+    }
+
+    @media (max-width: 768px) {
+      #game-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      #cocina, #pedidos-clientes {
+        width: 90%;
+      }
+      #receta-actual {
+        position: relative;
+        margin: 10px auto;
+        right: auto;
+        top: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>☕ Cafetería Challenge</h1>
+  <p id="puntaje">Puntaje: 0</p>
+  <p id="tiempo">⏱️ Tiempo restante: 60s</p>
+
+  <div id="game-container">
+    <div id="pedidos-clientes">
+      <h2>Clientes en espera</h2>
+      <div id="cliente-personaje">🚶</div>
+      <button id="nuevoPedido">🧾 Nuevo cliente</button>
+      <div id="mensaje"></div>
+
+      <h3>Pedidos pendientes</h3>
+      <div id="cola"></div>
+    </div>
+
+    <div id="cocina">
+      <h2>Estación de Café</h2>
+
+      <!-- 📋 Receta siempre visible -->
+      <div id="receta-actual">
+        <h3>Receta actual:</h3>
+        <ul id="lista-receta">
+          <li>(Sin pedido aún)</li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 80px;">
+        <div id="cafe" class="ingrediente" data-producto="Cafe">☕</div>
+        <div id="leche" class="ingrediente" data-producto="Leche">🥛</div>
+        <div id="chocolate" class="ingrediente" data-producto="Chocolate">🍫</div>
+        <div id="azucar" class="ingrediente" data-producto="Azucar">🍬</div>
+        <div id="masa" class="ingrediente" data-producto="Masa">🍞</div>
+        <div id="jamon" class="ingrediente" data-producto="Jamon">🥓</div>
+        <div id="queso" class="ingrediente" data-producto="Queso">🧀</div>
+      </div>
+
+      <div id="taza-drop" class="ui-widget-header">
+        Arrastra los ingredientes aquí
+        <p id="contenido-taza">Contenido: </p>
+      </div>
+
+      <button id="servirPedido">✅ Servir pedido</button>
+      <button id="limpiarTaza">🗑️ Limpiar Taza</button>
+    </div>
+  </div>
+
+  <script>
+    let colaPedidos = [];
+    let puntaje = 0;
+    let idPedido = 1;
+    let tazaIngredientes = [];
+    let tiempo = 60;
+    let temporizador = null;
+
+    const recetas = {
+      "Capuccino": ["Cafe", "Leche", "Azucar"],
+      "Latte": ["Cafe", "Leche"],
+      "Chocolate caliente": ["Chocolate", "Leche"],
+      "Cafe americano": ["Cafe"],
+      "Pan dulce": ["Masa", "Azucar"],
+      "Sandwich": ["Masa", "Jamon", "Queso"]
+    };
+
+    const productosDisponibles = Object.keys(recetas);
+
+    $(".ingrediente").draggable({
+      revert: "invalid",
+      helper: "clone",
+      opacity: 0.8
+    });
+
+    $("#taza-drop").droppable({
+      accept: ".ingrediente",
+      drop: function(event, ui) {
+        const ingrediente = ui.draggable.attr('data-producto');
+        tazaIngredientes.push(ingrediente);
+        actualizarContenidoTaza();
+        $("#mensaje").text(`Añadiste ${ingrediente}!`);
+      }
+    });
+
+    function nuevoPedido() {
+      const nombreCliente = generarNombre();
+      const producto = productosDisponibles[Math.floor(Math.random() * productosDisponibles.length)];
+
+      const pedido = {
+        id: idPedido++,
+        cliente: nombreCliente,
+        producto: producto,
+        ingredientesNecesarios: recetas[producto]
+      };
+
+      colaPedidos.push(pedido);
+      mostrarCola();
+      mostrarReceta(pedido);
+      $("#mensaje").text(`${nombreCliente} pidió un ${producto}.`);
+      mostrarCliente("nuevo");
+
+      if (!temporizador) iniciarCronometro();
+    }
+
+    function mostrarReceta(pedido) {
+      const lista = $("#lista-receta");
+      lista.html("");
+      pedido.ingredientesNecesarios.forEach(i => {
+        lista.append(`<li>${i}</li>`);
+      });
+    }
+
+    function servirPedido() {
+      if (colaPedidos.length === 0) {
+        $("#mensaje").text("No hay pedidos pendientes.");
+        return;
+      }
+
+      const pedido = colaPedidos[0];
+      const receta = pedido.ingredientesNecesarios.sort().join(",");
+      const mezcla = tazaIngredientes.sort().join(",");
+
+      if (receta === mezcla) {
+        puntaje += 20;
+        atenderPedido(pedido, true);
+      } else {
+        $("#mensaje").text(`❌ El ${pedido.producto} está mal preparado.`);
+        puntaje -= 5;
+      }
+
+      $("#puntaje").text(`Puntaje: ${puntaje}`);
+      limpiarTaza();
+    }
+
+    function atenderPedido(pedido, correcto) {
+      colaPedidos.shift();
+      mostrarCola();
+
+      if (correcto) {
+        $("#mensaje").text(`✅ ${pedido.cliente} recibió su ${pedido.producto}! +20 puntos`);
+        mostrarCliente("bye");
+        $("#lista-receta").html("<li>(Sin pedido actual)</li>");
+      }
+    }
+
+    function limpiarTaza() {
+      tazaIngredientes = [];
+      actualizarContenidoTaza();
+      $("#mensaje").text("Taza limpia y lista!");
+    }
+
+    function actualizarContenidoTaza() {
+      $("#contenido-taza").text(`Contenido: ${tazaIngredientes.join(", ")}`);
+    }
+
+    function mostrarCola() {
+      const div = $("#cola");
+      div.html("");
+      if (colaPedidos.length === 0) {
+        div.html("<p>(Sin pedidos)</p>");
+        return;
+      }
+      colaPedidos.forEach((p, i) => {
+        const pedidoHTML = `<div class='pedido' style='${i===0?"border:2px solid #e57373;":""}'><strong>${p.cliente}</strong><br>Producto: ${p.producto}</div>`;
+        div.append(pedidoHTML);
+      });
+    }
+
+    function generarNombre() {
+      const nombres = ["Ana", "Luis", "Carlos", "Maria", "Diego", "Sofia", "Lucia", "Raul"];
+      return nombres[Math.floor(Math.random() * nombres.length)];
+    }
+
+    function mostrarCliente(estado) {
+      const div = $("#cliente-personaje");
+      if (estado === "nuevo") div.text("🧍");
+      else if (estado === "bye") {
+        div.text("👋");
+        setTimeout(() => div.text("🚶"), 1000);
+      }
+    }
+
+    function iniciarCronometro() {
+      temporizador = setInterval(() => {
+        tiempo--;
+        $("#tiempo").text(`⏱️ Tiempo restante: ${tiempo}s`);
+        if (tiempo <= 0) {
+          clearInterval(temporizador);
+          temporizador = null;
+          $("#mensaje").text(`⏰ ¡Tiempo agotado! Puntaje final: ${puntaje}`);
+          $("#nuevoPedido, #servirPedido").prop("disabled", true);
+        }
+      }, 1000);
+    }
+
+    $("#nuevoPedido").on("click", nuevoPedido);
+    $("#servirPedido").on("click", servirPedido);
+    $("#limpiarTaza").on("click", limpiarTaza);
+  </script>
+</body>
+</html>
